@@ -68,10 +68,20 @@ def question():
 
     return render_template('question.html', user=user)
 
-@app.route('/answer')
-def answer():
+@app.route('/answer/<question_id>', methods=["GET", "POST"])
+def answer(question_id):
     user = get_active_user()
-    return render_template('answer.html', user=user)
+    db = get_db()
+
+    if request.method == "POST":
+        db.execute('UPDATE questions SET answer_text = ? WHERE id = ?', [request.form['answer'], question_id])
+        db.commit()
+        return redirect(url_for('unanswered'))
+
+    question_cur = db.execute('SELECT id, question_text FROM questions where id = ?', [question_id])
+    question = question_cur.fetchone()
+
+    return render_template('answer.html', user=user, question=question)
 
 @app.route('/ask', methods=["POST", "GET"])
 def ask():
