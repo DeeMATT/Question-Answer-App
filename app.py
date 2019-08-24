@@ -26,7 +26,14 @@ def get_active_user():
 @app.route('/')
 def index():
     user = get_active_user()
-    return render_template('home.html', user=user)
+    db = get_db()
+    questions_cur = db.execute("""SELECT questions.id as question_id, questions.question_text, askers.name as asker_name, experts.name as expert_name 
+                                FROM questions JOIN users as askers ON askers.id = questions.id 
+                                JOIN users as experts ON questions.expert_id = experts.id 
+                                WHERE questions.answer_text IS NOT NULL""")
+    questions = questions_cur.fetchall()
+
+    return render_template('home.html', user=user, questions=questions)
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -62,11 +69,17 @@ def login():
             return '<h1>The password is incorrect</h1>'
     return render_template('login.html', user=user)
 
-@app.route('/question')
-def question():
+@app.route('/question/<question_id>')
+def question(question_id):
     user = get_active_user()
+    db = get_db()
 
-    return render_template('question.html', user=user)
+    question_cur = db.execute('''SELECT questions.id, questions.question_text, questions.answer_text, askers.name as asked_by, experts.name as answered_by
+                                FROM questions JOIN users as askers ON questions.id = askers.id
+                                JOIN users as experts ON questions.expert_id = experts.expert WHERE questions.id = ?''', [question_id])
+    question_view = question_cur.fetchone()
+
+    return render_template('question.html', user=user, question=question_view)
 
 @app.route('/answer/<question_id>', methods=["GET", "POST"])
 def answer(question_id):
