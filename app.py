@@ -99,6 +99,9 @@ def answer(question_id):
     if not user:
         return redirect(url_for('login'))
 
+    if user['expert'] = 0:
+        return redirect(url_for('index'))
+
     if request.method == "POST":
         db.execute('UPDATE questions SET answer_text = ? WHERE id = ?', [request.form['answer'], question_id])
         db.commit()
@@ -134,6 +137,9 @@ def unanswered():
 
     if not user:
         return redirect(url_for('login'))
+        
+    if user['expert'] = 0:
+        return redirect(url_for('index'))
 
     db = get_db()
     question_cur = db.execute('''SELECT questions.id, question_text, users.name 
@@ -152,6 +158,9 @@ def users():
     if not user:
         return redirect(url_for('login'))
 
+    if user['admin'] = 0:
+        return redirect(url_for('index'))
+
     db = get_db()
     user_cur = db.execute('SELECT * FROM users')
     user_results = user_cur.fetchall()
@@ -164,7 +173,10 @@ def promote(user_id):
 
     if not user:
         return redirect(url_for('login'))
-        
+
+    if user['admin'] = 0:
+        return redirect(url_for('index'))
+
     db = get_db()
     db.execute('UPDATE users SET expert = 1 where id = ?', [user_id])
     db.commit()
