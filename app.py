@@ -96,6 +96,9 @@ def answer(question_id):
     user = get_active_user()
     db = get_db()
 
+    if not user:
+        return redirect(url_for('login'))
+
     if request.method == "POST":
         db.execute('UPDATE questions SET answer_text = ? WHERE id = ?', [request.form['answer'], question_id])
         db.commit()
@@ -110,6 +113,9 @@ def answer(question_id):
 def ask():
     user = get_active_user()
     db = get_db()
+
+    if not user:
+        return redirect(url_for('login'))
         
     if request.method == "POST":
         db.execute('INSERT INTO questions (question_text, asked_by_id, expert_id) VALUES (?, ?, ?)', [request.form['question'], user['id'], request.form['expert']])
@@ -126,6 +132,9 @@ def ask():
 def unanswered():
     user = get_active_user()
 
+    if not user:
+        return redirect(url_for('login'))
+
     db = get_db()
     question_cur = db.execute('''SELECT questions.id, question_text, users.name 
                                 FROM questions 
@@ -139,6 +148,10 @@ def unanswered():
 @app.route('/users')
 def users():
     user = get_active_user()
+
+    if not user:
+        return redirect(url_for('login'))
+
     db = get_db()
     user_cur = db.execute('SELECT * FROM users')
     user_results = user_cur.fetchall()
@@ -147,6 +160,11 @@ def users():
 
 @app.route('/promote/<user_id>')
 def promote(user_id):
+    user = get_active_user
+
+    if not user:
+        return redirect(url_for('login'))
+        
     db = get_db()
     db.execute('UPDATE users SET expert = 1 where id = ?', [user_id])
     db.commit()
