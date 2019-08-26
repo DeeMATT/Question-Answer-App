@@ -27,8 +27,13 @@ def get_active_user():
 def index():
     user = get_active_user()
     db = get_db()
-    questions_cur = db.execute("""SELECT questions.id as question_id, questions.question_text, askers.name as asker_name, experts.name as expert_name 
-                                FROM questions JOIN users as askers ON askers.id = questions.id 
+    questions_cur = db.execute("""SELECT 
+                                        questions.id as question_id, 
+                                        questions.question_text, 
+                                        askers.name as asker_name, 
+                                        experts.name as expert_name 
+                                FROM questions 
+                                JOIN users as askers ON askers.id = questions.id 
                                 JOIN users as experts ON questions.expert_id = experts.id 
                                 WHERE questions.answer_text IS NOT NULL""")
     questions = questions_cur.fetchall()
@@ -48,7 +53,8 @@ def register():
             return render_template('register.html', user=user, error="Oopps! User already exists! Try a different username")
 
         hashed_password = generate_password_hash(request.form['password'], method='sha256')
-        db.execute('INSERT INTO users (name, password, expert, admin) VALUES (?, ?, ?, ?)', [request.form['name'], hashed_password, '0', '0'])
+        db.execute('''INSERT INTO users (name, password, expert, admin) 
+                    VALUES (?, ?, ?, ?)''', [request.form['name'], hashed_password, '0', '0'])
         db.commit()
 
         session['user'] = request.form['name']
@@ -84,9 +90,15 @@ def question(question_id):
     user = get_active_user()
     db = get_db()
 
-    question_cur = db.execute('''SELECT questions.id, questions.question_text, questions.answer_text, askers.name as asked_by, experts.name as answered_by
-                                FROM questions JOIN users as askers ON questions.id = askers.id
-                                JOIN users as experts ON questions.expert_id = experts.expert WHERE questions.id = ?''', [question_id])
+    question_cur = db.execute('''SELECT questions.id, 
+                                        questions.question_text, 
+                                        questions.answer_text, 
+                                        askers.name as asked_by, 
+                                        experts.name as answered_by
+                                FROM questions 
+                                JOIN users as askers ON questions.id = askers.id
+                                JOIN users as experts ON questions.expert_id = experts.expert 
+                                WHERE questions.id = ?''', [question_id])
     question_view = question_cur.fetchone()
 
     return render_template('question.html', user=user, question=question_view)
@@ -121,7 +133,8 @@ def ask():
         return redirect(url_for('login'))
         
     if request.method == "POST":
-        db.execute('INSERT INTO questions (question_text, asked_by_id, expert_id) VALUES (?, ?, ?)', [request.form['question'], user['id'], request.form['expert']])
+        db.execute('''INSERT INTO questions (question_text, asked_by_id, expert_id) 
+                    VALUES (?, ?, ?)''', [request.form['question'], user['id'], request.form['expert']])
         db.commit()
 
         return redirect(url_for('index'))
@@ -142,7 +155,9 @@ def unanswered():
         return redirect(url_for('index'))
 
     db = get_db()
-    question_cur = db.execute('''SELECT questions.id, question_text, users.name 
+    question_cur = db.execute('''SELECT questions.id, 
+                                        question_text, 
+                                        users.name 
                                 FROM questions 
                                 INNER JOIN users 
                                 ON questions.asked_by_id = users.id 
